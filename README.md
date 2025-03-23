@@ -40,7 +40,7 @@ Two variations were created: one where the PDF data is directly included in the 
 `Code2` is data stored in knowlage base 
 
 # Outputs 
-Each version is asked ten questions, with their token usage, response times, and answers recorded for comparison.
+Each version is asked 7 questions, with their token usage, response times, and answers recorded for comparison.
 
 ## Code1
 
