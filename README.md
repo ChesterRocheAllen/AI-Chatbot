@@ -276,3 +276,15 @@ Both models clarify the difference between **legal requirements** and **advisory
 The tone and response quality of **Code 1** is more formal and detailed. This makes it well-suited for **academic** or **professional** settings where thorough understanding and deep explanations are needed. On the other hand, **Code 2** uses a more informal, to-the-point tone, making it ideal for users who need quick answers or summaries without diving into too much detail. Code 2 is more user-friendly for casual users who require fast insights.
 
 ---
+## Graphs 
+
+<p align="center">
+  <img src="Time.png" alt="Image 1" width="90%" />
+  <br>
+  <img src="Input.png" alt="Image 2" width="90%" />
+  <br>
+  <img src="Output.png" alt="Image 3" width="90%" />
+</p>
+
+# Data Source
+PDF's can be found in data folder.
