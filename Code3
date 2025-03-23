@@ -6,7 +6,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from PyPDF2 import PdfReader  # Import PyPDF2
 
-load_dotenv()
 GOOGLE_API_KEY = "*******************************" # Replace with your Google API key
 
 if not GOOGLE_API_KEY:
