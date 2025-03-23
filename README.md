@@ -30,7 +30,10 @@ This project is a Python-based chatbot that uses Google Generative AI (Gemini) a
   - `pydantic`
   - `langchain-google-genai google-generativeai`
   - `PyPDF2`
-  
+
+## AI Model
+I opted to use the "gemini-2.0-flash-thinking-exp-01-21" model for the API because of its impressive ability to process and generate context-aware, complex responses. This model performs exceptionally well across a variety of topics, offering detailed and coherent answers, making it ideal for applications that require quick and accurate decision-making. It is particularly effective in areas like risk management, legal frameworks, and cybersecurity. What sets this model apart is its optimised performance, allowing it to swiftly analyse large datasets while maintaining high precision and efficiency. Additionally, its in-depth understanding of complex issues ensures that it can produce responses that are both comprehensive and clear. Another key advantage is that the model is available for free, providing a cost-effective solution without sacrificing quality or capability. This makes it an excellent choice for use cases that demand fast, reliable, and high-quality output.
+
 ## Code
 Two variations were created: one where the PDF data is directly included in the prompt, and another where the data is stored separately as a knowledge base.
 `Code1` is data in prompt 
