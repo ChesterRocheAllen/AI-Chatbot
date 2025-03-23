@@ -1,0 +1,115 @@
+import time
+from dotenv import load_dotenv
+from pydantic import BaseModel
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import PydanticOutputParser
+from PyPDF2 import PdfReader  # Import PyPDF2
+
+GOOGLE_API_KEY = "*******************************" # Replace with your Google API key
+
+if not GOOGLE_API_KEY:
+    raise ValueError("GOOGLE_API_KEY is not set in the environment variables!")
+
+class ResearchResponse(BaseModel):
+    topic: str
+    summary: str
+    sources: list[str]
+    tools_used: list[str]
+
+llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-thinking-exp-01-21", google_api_key=GOOGLE_API_KEY) # Or your chosen model
+
+parser = PydanticOutputParser(pydantic_object=ResearchResponse)
+
+def extract_text_from_pdfs(pdf_paths): # Modified function to handle multiple PDF paths
+    combined_text = ""
+    for pdf_path in pdf_paths:
+        text = ""
+        try:
+            reader = PdfReader(pdf_path)
+            for page in reader.pages:
+                text += page.extract_text()
+            combined_text += f"\n\n--- Content from: {pdf_path} ---\n\n{text}" # Separator for each PDF content
+            print(f"Text extracted successfully from: {pdf_path}")
+        except Exception as e:
+            print(f"Error reading PDF: {pdf_path} - {e}")
+            continue # Continue to next PDF even if one fails
+    return combined_text
+
+pdf_paths = ["CELEX_32016R0679_EN_TXT.pdf", "Compliance-Risk-Management-Applying-the-COSO-ERM-Framework.pdf", "NIST.CSWP.29.pdf", "sarbanes_oxley_act_of_2002.pdf", "090123-operating-circular-1.pdf", "ippf-standards-2017-english.pdf", "d374.pdf", "C-MIN(99)6.en.pdf", "nist800-30.pdf"]  # PDF file paths list
+pdf_text = extract_text_from_pdfs(pdf_paths) # Call the function with the list of paths
+
+if not pdf_text: # Check if combined_text is empty (no PDFs read successfully)
+    print("No PDF content could be extracted.")
+    exit() # Stop execution if no PDF content is available
+
+
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system",
+         """
+         You are a highly knowledgeable assistant with deep understanding of Governance, Risk, and Compliance (GRC).
+         You are also a helpful chatbot engaging in a conversation.
+         I am providing you with the text content from multiple PDF documents. Please use these documents as primary references to answer my questions related to GRC, and incorporate your general GRC knowledge as well.
+
+         **PDF Documents Content:**
+         {pdf_content} In this order GDPR,COSO - Enterprise Risk Management (ERM) Framework, NIST Cybersecurity Framework, The Sarbanes-Oxley Act, The Federal Reserve’s Supervisory Guidance on Managing Risks, The Institute of Internal Auditors (IIA) Standards, The Basel III Framework, OECD Guidelines for Corporate Governance, Risk Management for IT Systems
+         --- End of PDF Documents Content ---
+
+         Now, based on your GRC expertise, the provided PDF documents, and the conversation history, please respond to my latest query.
+         Wrap your output in this JSON format and provide no other text\n{format_instructions}
+         """),
+        ("human", "{query}"),
+    ]
+).partial(format_instructions=parser.get_format_instructions())
+
+chat_history = [] # Initialize chat history list
+
+print("GRC Chatbot initialized. Type 'exit' to end the conversation.")
+
+while True: # Chatbot loop
+    query = input("You: ")
+    if query.lower() == 'exit':
+        print("Chatbot session ended.")
+        break
+
+    start_time = time.time() # Start time before API call
+    formatted_prompt = prompt.format_prompt(
+        query=query,
+        pdf_content=pdf_text,
+        chat_history="\n".join(chat_history) # Format chat history for prompt
+    )
+    raw_response = llm.invoke(formatted_prompt)
+    end_time = time.time() # End time after API call
+    response_time = end_time - start_time # Calculate response time
+
+    try:
+        structured_response = parser.parse(raw_response.content)
+
+        input_tokens = raw_response.usage_metadata.get('input_tokens', 'N/A') # Get token counts from response metadata
+        output_tokens = raw_response.usage_metadata.get('output_tokens', 'N/A')
+
+        print("\n--- GRC Assistant Response ---")
+        print(f"Topic: {structured_response.topic}")
+        print(f"\nSummary: {structured_response.summary}")
+        if structured_response.sources:
+            print("\nSources:")
+            for source in structured_response.sources:
+                print(f"- {source}")
+        if structured_response.tools_used:
+            print("\nTools Mentioned:")
+            for tool in structured_response.tools_used:
+                print(f"- {tool}")
+        print("\n--- Response Info ---") # New section for response info
+        print(f"Response Time: {response_time:.2f} seconds") # Display response time
+        print(f"Input Tokens: {input_tokens}") # Display input tokens
+        print(f"Output Tokens: {output_tokens}") # Display output tokens
+        print("\n--- End of Response ---\n")
+
+        # Add user query and assistant response to chat history for next turn (including token cost and time)
+        chat_history.append(f"User: {query}")
+        chat_history.append(f"Assistant: {structured_response.summary} (Response Time: {response_time:.2f}s, Input Tokens: {input_tokens}, Output Tokens: {output_tokens})")
+
+    except Exception as e:
+        print("Error parsing response:", e)
+        print("Raw Response -", raw_response)
